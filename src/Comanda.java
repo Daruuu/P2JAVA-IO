@@ -1,4 +1,7 @@
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -13,19 +16,47 @@ import java.util.Scanner;
 public class Comanda {
 
     private final ArrayList<Product> productos = new ArrayList<>();
-    private static final double[] ivaTipos = new double[3];
-    static double precioTotal = 0.0;
+    private static double[] ivaTipos = new double[3];
+    private static double precioTotal = 0.0;
     private Product p;
+    private String date;
 
     public void loadComanda(String fileName) throws Exception {
         Scanner scReadLinesCSV = new Scanner(new File(fileName));
-        // nos saltamos la primera linea
+        // nos saltamos la primera línea porque es la cabecera
         scReadLinesCSV.nextLine();
         while (scReadLinesCSV.hasNextLine()){
             String line = scReadLinesCSV.nextLine();
             addProduct(line);
         }
+        setDate(p.getDate());
         scReadLinesCSV.close();
+    }
+
+    public void setDate(String date) {
+        this.date = date;
+    }
+
+    public String getDate() {
+        return date;
+    }
+
+    public void writeComanda(int numeroComanda) throws IOException {
+        String newFilename = "comanda" + numeroComanda + ".txt";
+        System.out.println("El archivo de salida es: " + newFilename);
+        FileWriter file = new FileWriter(newFilename);
+        PrintWriter writer = new PrintWriter(file);
+
+        // Escribimos en el archivo
+        writer.println("Fecha: " + getDate());
+        writer.printf("%s %.2f\n", "TOTAL IVA 4%: ", ivaTipos[0]);
+        writer.printf("%s %.2f\n", "TOTAL IVA 10%: ", ivaTipos[1]);
+        writer.printf("%s %.2f\n", "TOTAL IVA 21%: ", ivaTipos[2]);
+        writer.printf("%s %.2f\n", "Total: ", precioTotal);
+        writer.println("Listado de productos: ");
+        writeProducts(writer);
+
+        writer.close();
     }
 
     public void addProduct(String line){
@@ -43,7 +74,7 @@ public class Comanda {
 
             p = new Product(productId, name, description, operator, date, cartId, quantity, ivaPercent, unitPrice);
 
-            procesarProducto(p);    // Calculamos el iva total
+            procesarProducto(p);    // Calculamos los diferentes tipos de iva y el precio total
             productos.add(p);
             // System.out.println("Add " + p);
         }
@@ -65,43 +96,44 @@ public class Comanda {
         precioTotal += precioConIva;
     }
 
-    /*
-    public void showProducts(){
-        for (Product producto : productos) {
-            System.out.println(producto.toString());
-        }
-    }
-     */
-
     public void showComanda() {
-        System.out.println("Total: " + precioTotal);
-        System.out.println("Fecha: " + p.getDate());
-        System.out.println("TOTAL IVA 4%: " + ivaTipos[0]);
-        System.out.println("TOTAL IVA 10%: " + ivaTipos[1]);
-        System.out.println("TOTAL IVA 21%: " + ivaTipos[2]);
+        System.out.printf("%s %.2f\n", "Total: ", precioTotal);
+        System.out.println("Fecha: " + getDate());
+        System.out.printf("%s %.2f\n", "TOTAL IVA 4%: ", ivaTipos[0]);
+        System.out.printf("%s %.2f\n", "TOTAL IVA 10%: ", ivaTipos[1]);
+        System.out.printf("%s %.2f\n", "TOTAL IVA 21%: ", ivaTipos[2]);
         System.out.println("Productos: ");
         showProducts();
     }
 
-    public void showProducts(){
-        for (Product p : productos){
+    public void showProducts(){ for (Product p : productos){
             System.out.println(p);
         }
     }
 
-    public double datosCooperativa2(){
-        double totalPedido = 0.0;
-        for (int i = 0; i < productos.size(); i++) {
-            totalPedido += productos.get(i).getQuantity();
+    public void writeProducts(PrintWriter writer) {
+        for (Product p: productos) {
+            writer.println(p);
         }
-        System.out.println("Total de comandas: ");
-        return totalPedido;
     }
 
     public ArrayList<Product> getProducts() {
         return productos;
     }
-    public void datosComanda(){
 
+    public static double getPrecioTotal() {
+        return precioTotal;
+    }
+
+    public static void setPrecioTotal(double precioTotal) {
+        Comanda.precioTotal = precioTotal;
+    }
+
+    public static double[] getIvaTipos() {
+        return ivaTipos;
+    }
+
+    public static void setIvaTipos(double[] ivaTipos) {
+        Comanda.ivaTipos = ivaTipos;
     }
 }
